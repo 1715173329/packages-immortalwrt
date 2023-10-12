@@ -1,0 +1,41 @@
+From 0ac6108856b9d500bc376d1d7e0b648d15499837 Mon Sep 17 00:00:00 2001
+From: Daniel Stenberg <daniel@haxx.se>
+Date: Thu, 22 Jun 2023 14:34:49 +0200
+Subject: [PATCH] configure: add check for ldap_init_fd
+
+... as otherwise the configure script will say it is OpenLDAP in the
+summary, but not set the USE_OPENLDAP define, therefor not using the
+intended OpenLDAP code paths.
+
+Regression since 4d7385446 (7.85.0)
+Fixes #11372
+Closes #11374
+Reported-by: vlkl-sap on github
+---
+ configure.ac | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -1663,16 +1663,19 @@ if test x$CURL_DISABLE_LDAP != x1 ; then
+ fi
+ 
+ if test x$CURL_DISABLE_LDAP != x1 ; then
+-  AC_CHECK_FUNCS([ldap_url_parse])
++  AC_CHECK_FUNCS([ldap_url_parse \
++                  ldap_init_fd])
+ 
+   if test "$LDAPLIBNAME" = "wldap32"; then
+     curl_ldap_msg="enabled (winldap)"
+     AC_DEFINE(USE_WIN32_LDAP, 1, [Use Windows LDAP implementation])
+   else
+-    curl_ldap_msg="enabled (OpenLDAP)"
+     if test "x$ac_cv_func_ldap_init_fd" = "xyes"; then
++      curl_ldap_msg="enabled (OpenLDAP)"
+       AC_DEFINE(USE_OPENLDAP, 1, [Use OpenLDAP-specific code])
+       AC_SUBST(USE_OPENLDAP, [1])
++    else
++      curl_ldap_msg="enabled (ancient OpenLDAP)"
+     fi
+   fi
+ fi
